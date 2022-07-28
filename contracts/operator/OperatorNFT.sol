@@ -69,11 +69,11 @@ contract OperatorNFT is
     error LevelLengthTooLow();
     error PriceTooLow();
     error VoterTooLow();
+    error DeadlineTooLow();
     error NoOwnedNFT();
     error InValidLevel();
     error HasNFTAlready();
     error HasPollAlready();
-    error InvalidDeadline();
     error AlreadyVote();
     error NoPoll();
     error InvalidPollStatus();
@@ -140,6 +140,9 @@ contract OperatorNFT is
             if (newLevel[i].voter <= 0) {
                 revert VoterTooLow();
             }
+            if (newLevel[i].deadline <= 0) {
+                revert DeadlineTooLow();
+            }
             ERC721AStorageCustom.layout()._levels[currentPeriod()].push(
                 newLevel[i]
             );
@@ -179,24 +182,24 @@ contract OperatorNFT is
     function poll(address creater)
         external
         view
-        returns (
-            uint8 _level,
-            uint16 _voter,
-            uint256 _deadline,
-            uint256 _period,
-            uint256 _status
-        )
+        returns (ERC721AStorageCustom.PollWithLevel memory)
     {
-        ERC721AStorageCustom.Poll memory data = ERC721AStorageCustom
+        ERC721AStorageCustom.Poll memory _poll = ERC721AStorageCustom
             .layout()
             ._polls[creater];
-        return (
-            data.level,
-            data.voter,
-            data.deadline,
-            data.period,
-            pollStatus(creater)
-        );
+        return
+            ERC721AStorageCustom.PollWithLevel({
+                level: ERC721AStorageCustom.layout()._levels[_poll.period][
+                    _poll.level - 1
+                ],
+                poll: ERC721AStorageCustom.PollResponse({
+                    level: _poll.level,
+                    voter: _poll.voter,
+                    deadline: _poll.deadline,
+                    period: _poll.period,
+                    status: pollStatus(creater)
+                })
+            });
     }
 
     function level(uint256 period)
@@ -252,7 +255,7 @@ contract OperatorNFT is
      * Player Functions
      */
 
-    function createPoll(uint8 levelNum, uint256 deadline)
+    function createPoll(uint8 levelNum)
         external
         whenNotPaused
         whenInPeriod
@@ -269,21 +272,22 @@ contract OperatorNFT is
         if (data._polls[_msgSender()].level != 0) {
             revert HasPollAlready();
         }
-        if (
-            deadline < block.timestamp ||
-            deadline > block.timestamp + _DEADLINE_LIMIT * 1 days
-        ) {
-            revert InvalidDeadline();
-        }
 
         ERC721AStorageCustom.Poll memory newPoll = ERC721AStorageCustom.Poll({
             level: levelNum,
-            deadline: deadline,
+            deadline: block.timestamp +
+                data._levels[currentPeriod()][levelNum - 1].deadline *
+                1 seconds,
             voter: 0,
             period: currentPeriod()
         });
         data._polls[_msgSender()] = newPoll;
-        emit CreatePoll(_msgSender(), levelNum, deadline, currentPeriod());
+        emit CreatePoll(
+            _msgSender(),
+            newPoll.level,
+            newPoll.deadline,
+            newPoll.period
+        );
     }
 
     function checkTokenAndMint(
@@ -395,6 +399,7 @@ contract OperatorNFT is
         if (newLevel.length < 1) {
             revert LevelLengthTooLow();
         }
+
         ERC721AStorageCustom.Layout storage data = ERC721AStorageCustom
             .layout();
 
@@ -404,6 +409,9 @@ contract OperatorNFT is
             }
             if (newLevel[i].voter <= 0) {
                 revert VoterTooLow();
+            }
+            if (newLevel[i].deadline <= 0) {
+                revert DeadlineTooLow();
             }
             data._levels[currentPeriod() + 1].push(newLevel[i]);
         }

@@ -18,9 +18,23 @@ library ERC721AStorageCustom {
         uint256 period;
     }
 
+    struct PollResponse {
+        uint8 level;
+        uint16 voter;
+        uint256 deadline;
+        uint256 period;
+        uint256 status;
+    }
+
+    struct PollWithLevel {
+        Level level;
+        PollResponse poll;
+    }
+
     struct Level {
         uint16 voter;
         uint256 price;
+        uint256 deadline;
     }
 
     struct Layout {
