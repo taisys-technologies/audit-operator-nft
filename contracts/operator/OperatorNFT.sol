@@ -44,17 +44,17 @@ contract OperatorNFT is
      */
 
     event CreatePoll(
-        address creater,
+        address indexed creater,
         uint8 level,
         uint256 deadline,
         uint256 curPeriod
     );
-    event Vote(address voter, address poll);
+    event Vote(address indexed voter, address indexed poll);
     event SetMaxTokenSupply(uint256 maxTokenSupply);
     event SetLevel(uint256 period, ERC721AStorageCustom.Level[] levels);
     event SetSignerAddress(address signerAddress);
-    event WithdrawByVoter(address voter, uint256 amount);
-    event WithdrawByAdmin(address to, uint256 amount);
+    event WithdrawByVoter(address indexed voter, uint256 amount);
+    event WithdrawByAdmin(address indexed to, uint256 amount);
     event SetPeriodTokenSupply(uint256 periodTokenSupply);
     event StartPeriod(uint256 curPeriod, uint256 periodTokenSupply);
     event EndPeriod(uint256 curPeriod);
