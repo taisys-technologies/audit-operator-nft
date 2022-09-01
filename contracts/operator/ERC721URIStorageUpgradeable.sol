@@ -22,6 +22,13 @@ abstract contract ERC721URIStorageUpgradeable is
     mapping(uint256 => string) private _tokenURIs;
 
     /**
+     * Errors
+     */
+
+    error ErrStorageURIQueryNoExist();
+    error ErrStorageURISetNoExist();
+
+    /**
      * @dev See {IERC721Metadata-tokenURI}.
      */
     function tokenURI(uint256 tokenId)
@@ -31,10 +38,9 @@ abstract contract ERC721URIStorageUpgradeable is
         override
         returns (string memory)
     {
-        require(
-            _exists(tokenId),
-            "ERC721URIStorage: URI query for nonexistent token"
-        );
+        if (!_exists(tokenId)) {
+            revert ErrStorageURIQueryNoExist();
+        }
 
         string memory _tokenURI = _tokenURIs[tokenId];
         string memory base = _baseURI();
@@ -62,10 +68,9 @@ abstract contract ERC721URIStorageUpgradeable is
         internal
         virtual
     {
-        require(
-            _exists(tokenId),
-            "ERC721URIStorage: URI set of nonexistent token"
-        );
+        if (!_exists(tokenId)) {
+            revert ErrStorageURISetNoExist();
+        }
         _tokenURIs[tokenId] = _tokenURI;
     }
 

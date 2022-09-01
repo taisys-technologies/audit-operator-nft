@@ -33,7 +33,6 @@ contract OperatorNFT is
      * Global Variables
      */
 
-    uint256 private constant _DEADLINE_LIMIT = 7;
     bytes32 private constant _CHECKTOKEN_TYPEHASH =
         keccak256(
             "CheckToken(string uuid,address userAddress,uint256 deadline,string uri)"
@@ -116,6 +115,9 @@ contract OperatorNFT is
         __UUPSUpgradeable_init();
         __ReentrancyGuard_init();
 
+        ERC721AStorageCustom.Layout storage data = ERC721AStorageCustom
+            .layout();
+
         if (newMaxTokenSupply <= 0) {
             revert MaxTokenSupplyTooLow();
         }
@@ -133,6 +135,8 @@ contract OperatorNFT is
         if (newLevel.length < 1) {
             revert LevelLengthTooLow();
         }
+
+        // to set level 0
         for (uint8 i = 0; i < newLevel.length; i++) {
             if (newLevel[i].price <= 0) {
                 revert PriceTooLow();
@@ -143,14 +147,12 @@ contract OperatorNFT is
             if (newLevel[i].deadline <= 0) {
                 revert DeadlineTooLow();
             }
-            ERC721AStorageCustom.layout()._levels[currentPeriod()].push(
-                newLevel[i]
-            );
+            data._levels[currentPeriod()].push(newLevel[i]);
         }
 
-        ERC721AStorageCustom.layout()._paymentContract = newPaymentContract;
-        ERC721AStorageCustom.layout()._maxTokenSupply = newMaxTokenSupply;
-        ERC721AStorageCustom.layout()._signerAddress = newSignerAddress;
+        data._paymentContract = newPaymentContract;
+        data._maxTokenSupply = newMaxTokenSupply;
+        data._signerAddress = newSignerAddress;
         // give role to the address who deployed
         _grantRole(DEFAULT_ADMIN_ROLE, _msgSender());
     }
@@ -163,7 +165,7 @@ contract OperatorNFT is
         return ERC721AStorageCustom.layout()._availableToken;
     }
 
-    function periodTokenSupply() public view returns (uint256) {
+    function periodTokenSupply() external view returns (uint256) {
         return ERC721AStorageCustom.layout()._periodTokenSupply;
     }
 
@@ -214,13 +216,13 @@ contract OperatorNFT is
         return ERC721AStorageCustom.layout()._voters[user];
     }
 
-    function totalMinted() public view returns (uint256) {
+    function totalMinted() external view returns (uint256) {
         return _totalMinted();
     }
 
     function periodMinted() public view returns (uint256) {
         return
-            totalMinted() -
+            _totalMinted() -
             (ERC721AStorageCustom.layout()._availableTokenSupply -
                 ERC721AStorageCustom.layout()._periodTokenSupply);
     }
@@ -234,15 +236,13 @@ contract OperatorNFT is
             revert NoPoll();
         }
 
-        ERC721AStorageCustom.Level memory _level = data._levels[_poll.period][
-            _poll.level - 1
-        ];
-
         if (data._minted[pollAddress]) {
             return uint256(ERC721AStorageCustom.PollStatus.Minted);
         } else if (_poll.period < currentPeriod() || !duringPeriod()) {
             return uint256(ERC721AStorageCustom.PollStatus.Expired);
-        } else if (_poll.voter >= _level.voter) {
+        } else if (
+            _poll.voter >= data._levels[_poll.period][_poll.level - 1].voter
+        ) {
             return uint256(ERC721AStorageCustom.PollStatus.Success);
         } else if (_poll.deadline < block.timestamp) {
             return uint256(ERC721AStorageCustom.PollStatus.Expired);
@@ -480,16 +480,13 @@ contract OperatorNFT is
      * Internal Functions
      */
 
-    function _setPeriodTokenSupply(uint256 _periodTokenSupply)
-        internal
-        onlyRole(DEFAULT_ADMIN_ROLE)
-    {
+    function _setPeriodTokenSupply(uint256 _periodTokenSupply) internal {
         ERC721AStorageCustom.Layout storage data = ERC721AStorageCustom
             .layout();
         if (_periodTokenSupply <= 0) {
             revert PeriodTokenSupplyTooLow();
         }
-        if (periodMinted() != periodTokenSupply()) {
+        if (periodMinted() != data._periodTokenSupply) {
             revert PrevPeriodTokenLeft();
         }
 
