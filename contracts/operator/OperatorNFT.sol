@@ -161,26 +161,32 @@ contract OperatorNFT is
      * View Functions
      */
 
+    // return token amount that admin can withdraw in this contract
     function availableToken() external view returns (uint256) {
         return ERC721AStorageCustom.layout()._availableToken;
     }
 
+    // return NFT supply of current period
     function periodTokenSupply() external view returns (uint256) {
         return ERC721AStorageCustom.layout()._periodTokenSupply;
     }
 
+    // return total NFT supply of this contract
     function maxTokenSupply() external view returns (uint256) {
         return ERC721AStorageCustom.layout()._maxTokenSupply;
     }
 
+    // return address who can sign for mint
     function signerAddress() external view returns (address) {
         return ERC721AStorageCustom.layout()._signerAddress;
     }
 
+    // return ERC20 which is payment token for buying NFT
     function paymentContract() external view returns (address) {
         return ERC721AStorageCustom.layout()._paymentContract;
     }
 
+    // return poll's info and related level details
     function poll(address creater)
         external
         view
@@ -204,6 +210,7 @@ contract OperatorNFT is
             });
     }
 
+    // return level details of specific period
     function level(uint256 period)
         external
         view
@@ -212,14 +219,17 @@ contract OperatorNFT is
         return ERC721AStorageCustom.layout()._levels[period];
     }
 
+    // return the address that user vote for
     function voter(address user) external view returns (address) {
         return ERC721AStorageCustom.layout()._voters[user];
     }
 
+    // return the total amount of tokens minted in this contract
     function totalMinted() external view returns (uint256) {
         return _totalMinted();
     }
 
+    // return the total amount of tokens minted in current period
     function periodMinted() public view returns (uint256) {
         return
             _totalMinted() -
@@ -227,6 +237,7 @@ contract OperatorNFT is
                 ERC721AStorageCustom.layout()._periodTokenSupply);
     }
 
+    // return the poll's status
     function pollStatus(address pollAddress) public view returns (uint256) {
         ERC721AStorageCustom.Layout storage data = ERC721AStorageCustom
             .layout();
@@ -255,6 +266,7 @@ contract OperatorNFT is
      * Player Functions
      */
 
+    // create a new poll with specific level
     function createPoll(uint8 levelNum)
         external
         whenNotPaused
@@ -290,6 +302,7 @@ contract OperatorNFT is
         );
     }
 
+    // mint 1 NFT with signature signed by signerAddress
     function checkTokenAndMint(
         string calldata uuid,
         address userAddress,
@@ -301,6 +314,7 @@ contract OperatorNFT is
         _mint(1, uri);
     }
 
+    // vote for poll by paying specific ERC20(paymentContract)
     function vote(address pollAddr)
         external
         whenNotPaused
@@ -340,6 +354,7 @@ contract OperatorNFT is
         );
     }
 
+    // voter withdraws specific ERC20(paymentContract) when the poll already expire
     function withdrawByVoter() external nonReentrant {
         ERC721AStorageCustom.Layout storage data = ERC721AStorageCustom
             .layout();
@@ -375,6 +390,7 @@ contract OperatorNFT is
      * Admin Functions
      */
 
+    // Admin can modify maxTokenSupply of this contract before the NFTs start to be sold
     function setMaxTokenSupply(uint256 newMaxToken)
         external
         onlyRole(DEFAULT_ADMIN_ROLE)
@@ -391,6 +407,7 @@ contract OperatorNFT is
         emit SetMaxTokenSupply(newMaxToken);
     }
 
+    // Admin can set up the level setting for the next period
     function setLevel(ERC721AStorageCustom.Level[] calldata newLevel)
         external
         onlyRole(DEFAULT_ADMIN_ROLE)
@@ -419,6 +436,7 @@ contract OperatorNFT is
         emit SetLevel(currentPeriod() + 1, newLevel);
     }
 
+    // Admin can change the signerAddress who can sign the signature for minting NFT
     function setSignerAddress(address newSignerAddress)
         external
         onlyRole(DEFAULT_ADMIN_ROLE)
@@ -430,6 +448,7 @@ contract OperatorNFT is
         emit SetSignerAddress(newSignerAddress);
     }
 
+    // Admin can withdraw ERC20(paymentContract) which are from polls those are minted
     function withdrawByAdmin(address to, uint256 amount)
         external
         onlyRole(DEFAULT_ADMIN_ROLE)
@@ -445,14 +464,17 @@ contract OperatorNFT is
         IERC20Upgradeable(data._paymentContract).safeTransfer(to, amount);
     }
 
+    // Admin triggers stopped state
     function pause() external onlyRole(DEFAULT_ADMIN_ROLE) {
         _pause();
     }
 
+    // Admin returns to normal state.
     function unpause() external onlyRole(DEFAULT_ADMIN_ROLE) {
         _unpause();
     }
 
+    // Admin starts a new round of sale
     function startPeriod(uint256 _periodTokenSupply)
         external
         onlyRole(DEFAULT_ADMIN_ROLE)
@@ -471,6 +493,7 @@ contract OperatorNFT is
         emit StartPeriod(currentPeriod(), _periodTokenSupply);
     }
 
+    // Admin end the current period
     function endPeriod() external onlyRole(DEFAULT_ADMIN_ROLE) whenInPeriod {
         _endPeriod();
         emit EndPeriod(currentPeriod());
@@ -480,6 +503,7 @@ contract OperatorNFT is
      * Internal Functions
      */
 
+    // set up the NFT supply of next period
     function _setPeriodTokenSupply(uint256 _periodTokenSupply) internal {
         ERC721AStorageCustom.Layout storage data = ERC721AStorageCustom
             .layout();
@@ -502,6 +526,7 @@ contract OperatorNFT is
         emit SetPeriodTokenSupply(_periodTokenSupply);
     }
 
+    // check the signature is sign by signerAddress
     function _checkToken(
         string calldata uuid,
         address userAddress,
@@ -540,6 +565,7 @@ contract OperatorNFT is
         data._usedUUID[uuid] = true;
     }
 
+    // mint NFT to msgSender
     function _mint(uint256 quantity, string calldata uri) internal {
         ERC721AStorageCustom.Layout storage data = ERC721AStorageCustom
             .layout();
