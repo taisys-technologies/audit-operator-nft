@@ -95,16 +95,14 @@ contract AccessControlUpgradeableCustom is
     }
 
     // old Admin can cancel its transition
-    function cancelTransferAdmin(address newAdmin)
+    function cancelTransferAdmin()
         external
         onlyRole(DEFAULT_ADMIN_ROLE)
         inTransition(_msgSender())
     {
-        if (_inTransition[_msgSender()] != newAdmin) {
-            revert ErrInvalidTransition();
-        }
+        address adminToBeCanceled = _inTransition[_msgSender()];
         _inTransition[_msgSender()] = address(0);
-        _revokeRole(DEFAULT_ADMIN_ROLE, newAdmin);
-        emit CancelTransferAdmin(newAdmin);
+        _revokeRole(DEFAULT_ADMIN_ROLE, adminToBeCanceled);
+        emit CancelTransferAdmin(adminToBeCanceled);
     }
 }

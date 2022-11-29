@@ -29,12 +29,14 @@
 
 # testing
 /coverage
+coverage.json
 
 # production
 /contracts/abi
 /contracts/bin
 /contracts/export
 /build
+types/
 
 # hardhat
 .openzeppelin
