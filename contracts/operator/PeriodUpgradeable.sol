@@ -16,6 +16,12 @@ abstract contract PeriodUpgradeable is Initializable, ContextUpgradeable {
      */
     event UnPeriod(address account);
 
+    /**
+     * Errors
+     */
+    error ErrNotInPeriod();
+    error ErrAlreadyInPeriod();
+
     bool private _duringPeriod;
     uint256 private _currentPeriod;
 
@@ -45,7 +51,9 @@ abstract contract PeriodUpgradeable is Initializable, ContextUpgradeable {
      * - The contract must be during period.
      */
     modifier whenInPeriod() {
-        require(duringPeriod(), "DuringPeriod: not during period");
+        if (!duringPeriod()) {
+            revert ErrNotInPeriod();
+        }
         _;
     }
 
@@ -57,10 +65,15 @@ abstract contract PeriodUpgradeable is Initializable, ContextUpgradeable {
      * - The contract must be not during period.
      */
     modifier whenNotInPeriod() {
-        require(!duringPeriod(), "DuringPeiod: during period");
+        if (duringPeriod()) {
+            revert ErrAlreadyInPeriod();
+        }
         _;
     }
 
+    /**
+     * @dev return current period
+     */
     function currentPeriod() public view returns (uint256) {
         return _currentPeriod;
     }

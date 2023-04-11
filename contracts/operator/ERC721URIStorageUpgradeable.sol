@@ -31,13 +31,9 @@ abstract contract ERC721URIStorageUpgradeable is
     /**
      * @dev See {IERC721Metadata-tokenURI}.
      */
-    function tokenURI(uint256 tokenId)
-        public
-        view
-        virtual
-        override
-        returns (string memory)
-    {
+    function tokenURI(
+        uint256 tokenId
+    ) public view virtual override returns (string memory) {
         if (!_exists(tokenId)) {
             revert ErrStorageURIQueryNoExist();
         }
@@ -64,10 +60,10 @@ abstract contract ERC721URIStorageUpgradeable is
      *
      * - `tokenId` must exist.
      */
-    function _setTokenURI(uint256 tokenId, string memory _tokenURI)
-        internal
-        virtual
-    {
+    function _setTokenURI(
+        uint256 tokenId,
+        string memory _tokenURI
+    ) internal virtual {
         if (!_exists(tokenId)) {
             revert ErrStorageURISetNoExist();
         }
